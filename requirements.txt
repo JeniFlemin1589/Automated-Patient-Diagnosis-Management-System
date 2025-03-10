@@ -1,0 +1,7 @@
+streamlit
+openai
+sqlite
+sqlalchemy
+python-dotenv
+PyPDF2
+python-docx
