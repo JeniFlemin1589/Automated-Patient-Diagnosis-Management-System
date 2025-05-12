@@ -2,94 +2,91 @@ import os
 from dotenv import load_dotenv, find_dotenv
 from openai import OpenAI
 
-# Load environment variables for the API key
+# Load environment variables for secure API key management
 load_dotenv(find_dotenv())
 
-# Initialize OpenAI client with the API key - using your key
+# Initialize OpenAI client with the API key from environment variables
 client = OpenAI(api_key=os.environ.get('open_api_key'))
 
-# Set parameters for OpenAI requests
+# Set default parameters for OpenAI API requests
 temperature = 0.3
 max_tokens = 500
 
 class ApiInteraction:
     """
-    A class to interact with the OpenAI API to generate diagnosis letters
-    from medical reports, as well as update letters based on new medical information.
+    A helper class to interface with the OpenAI API for generating and updating medical diagnosis letters.
     """
 
     def __init__(self):
         """
-        Initializes the API interaction class and checks if the API key exists in environment variables.
+        Initializes the API interaction class and verifies the presence of the API key.
         """
         self.api_key = os.environ.get('open_api_key')
         if not self.api_key:
-            raise ValueError("API key is missing from the environment variables")
+            raise ValueError("API key is missing from environment variables.")
 
-        # Set the API key for the OpenAI client
+        # Assign the API key to the OpenAI client
         client.api_key = self.api_key
 
     def generate_diagnosis_letter(report_content):
         """
-        Generates a detailed diagnosis letter based on the patient's medical report using GPT API.
+        Creates a detailed diagnosis letter from a given medical report using GPT API.
         
-        Parameters:
-            report_content (str): The content of the patient's medical report.
+        Args:
+            report_content (str): Text content of the patient's medical report.
         
         Returns:
             str: The generated diagnosis letter.
         """
         prompt = f"""
-        You are a professional medical assistant. Based on the following patient's medical report, extract the necessary details and generate a detailed diagnosis letter in a structured format. 
+        You are a professional medical assistant. Based on the following patient's medical report, extract key details and produce a comprehensive diagnosis letter formatted as follows:
 
-        Extract the following information from the report:
-        
-        1. **Patient Name**: Extract the patient's name and any relevant from Patient Information section.
-        2. **Date of Appointment**: Extract the date of the appointment.
-        3. **Physician’s Name**: Extract the doctor's name from Patient Information section.
-        4. **Hospital Name**: Extract the hospital name from the report.
-        5. **Contact Information**: Extract any contact information provided for the hospital/doctor.
-        6. **Blood Test Results**: Extract relevant blood test results.
-        7. **Electrocardiogram (ECG) Report**: Extract relevant information related to the ECG report.
-        8. **Thyroid Ultrasound Report**: Extract relevant information related to the thyroid ultrasound report.
-        9. **Additional Tests**: Extract any additional test results or findings.
-        10. **Doctor’s Recommendations**: Extract details on the diagnosis and treatment recommendations.
-        11. **Follow-Up Appointments**: Extract details regarding follow-up appointments or any recommended actions.
-        12. **Date of Report**: Extract details from Patient Information.
+        Extract the following:
+        1. **Patient Name** and relevant info from the Patient Information section.
+        2. **Date of Appointment**
+        3. **Physician’s Name**
+        4. **Hospital Name**
+        5. **Contact Details** (hospital/doctor)
+        6. **Blood Test Results**
+        7. **ECG Report Findings**
+        8. **Thyroid Ultrasound Report Insights**
+        9. **Additional Tests and Findings**
+        10. **Doctor’s Diagnosis & Treatment Recommendations**
+        11. **Follow-Up Actions and Appointments**
+        12. **Report Date**
 
-        Based on this information, fill in the following diagnosis letter template:
+        Using this info, fill in the template below:
 
         **Patient Diagnosis Letter Template**:
 
         Dear Patient,
 
-        Thank you for your last visit . Based on your medical report, here are the findings:
+        Thank you for your last visit. Based on your medical report, here are the findings:
 
         **Findings:**
-        - **Symptoms/Observations**: [Extract key symptoms and observations from the report]
+        - **Symptoms/Observations**: [Key symptoms/observations]
         - **Test Results**:
-            - Blood Test Results: [Summarize relevant blood test results]
-            - Electrocardiogram (ECG) Report: [Summarize ECG results]
-            - Thyroid Ultrasound Report: [Summarize thyroid ultrasound results]
-            - Additional Tests: [Summarize any additional test results]
+            - Blood Test Results: [Summary]
+            - ECG Report: [Summary]
+            - Thyroid Ultrasound: [Summary]
+            - Additional Tests: [Summary]
         
         **Diagnosis:**
-        [Provide the diagnosis based on the doctor’s recommendations and initial findings]
+        [Diagnosis details]
 
         **Treatment Plan:**
-        [Outline the recommended treatment plan, including any medications or therapies]
+        [Medications/Therapies]
 
         **Follow-Up:**
-        [Provide details about the follow-up appointment and any instructions for the patient]
+        [Follow-up instructions or schedules]
 
         Please contact our office if you have any questions or concerns.
 
-        
         Medical Report:
         {report_content}
         """
 
-        # Generate completion using OpenAI API
+        # Call GPT API for completion
         completion = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "system", "content": prompt}],
@@ -97,23 +94,22 @@ class ApiInteraction:
             max_tokens=max_tokens,
         )
 
-        # Return the generated letter content
         return completion.choices[0].message.content
 
     def generate_updated_letter(previous_letter, new_report):
         """
-        Generates an updated diagnosis letter based on the previous diagnosis letter and a new medical report.
+        Produces an updated diagnosis letter integrating new medical data with prior diagnosis.
 
-        Parameters:
+        Args:
             previous_letter (str): The previously generated diagnosis letter.
-            new_report (str): The new medical report to update the diagnosis.
-
+            new_report (str): The latest medical report for updating diagnosis.
+        
         Returns:
-            str: The updated diagnosis letter.
+            str: The revised diagnosis letter.
         """
         prompt = f"""
-        You are a professional medical assistant. Given the previous diagnosis letter and a new medical report, update the diagnosis letter to reflect any changes in the patient's condition.
-        Use the following updated letter template:
+        You are a professional medical assistant. Given the previous diagnosis letter and a new medical report, update the diagnosis letter accordingly.
+        Use this template:
 
         Dear [Patient Name],
 
@@ -126,7 +122,7 @@ class ApiInteraction:
         {new_report}
 
         **Updated Diagnosis and Recommendations:**
-        [Provide the updated diagnosis and treatment recommendations]
+        [Updated diagnosis and treatment plan]
 
         Please contact our office if you have any further questions or concerns.
 
@@ -136,7 +132,7 @@ class ApiInteraction:
         [Contact Information]
         """
 
-        # Generate completion using OpenAI API
+        # Call GPT API for the updated letter
         completion = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "system", "content": prompt}],
@@ -144,7 +140,4 @@ class ApiInteraction:
             max_tokens=max_tokens,
         )
 
-        # Return the updated letter content
         return completion.choices[0].message.content
-
-
